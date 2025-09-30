@@ -1,0 +1,17 @@
+# Arquivos de compilação e saída
+bin/
+obj/
+
+# Arquivos de configuração do Visual Studio
+*.user
+*.suo
+*.suo
+*.csproj.user
+
+# Arquivos temporários e de build
+*.vs/
+
+# Outros arquivos comuns
+*.dll
+*.exe
+*.pdb

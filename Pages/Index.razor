@@ -1,0 +1,56 @@
+@page "/"
+
+<MudDialogProvider />
+<MudContainer Class="d-flex justify-center mb-2">
+    <MudFab Color="Color.Primary"
+            StartIcon="@Icons.Material.Filled.Add"
+            Size="Size.Large"
+            IconSize="Size.Large"
+            Label="Compras diárias"
+            Class="ma-2" @onclick="CreateAsync" />
+</MudContainer>
+ 
+<MudGrid Justify="Justify.Center" class="pr-4 pl-4">
+    @foreach(var compra in historicoComprasDiaAtual)
+    {
+        <MudItem xs="2">
+            <MudCard>
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.body1">@compra.Nome</MudText>
+                        <MudText Typo="Typo.body1">$@compra.Valor</MudText>
+                        <MudText Typo="Typo.body1">@compra.Categoria</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                    @* <MudCardMedia Image="@compra.ImagemUrl" width="100" Height="200" /> *@
+                <MudCardContent>
+                    <MudText Typo="Typo.body2">@compra.Comentario</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    @* <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" @onclick="(e => UpdateAsync(compra.Id))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" @onclick="(e => DeleteAsync(compra.Id))" /> *@
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+@code
+    {
+
+    List<HistoricoCompraResponse>? historicoComprasDiaAtual = new List<HistoricoCompraResponse>();
+    string? dataAtual;
+
+    protected override async Task OnInitializedAsync()
+    {
+        DateTime data = DateTime.Now;
+        dataAtual = data.ToString("yyyy-MM-dd");
+        historicoComprasDiaAtual = await _api.GetHistoricoCompras(dataAtual);
+    }
+
+    private async Task CreateAsync()
+    {
+        throw new NotImplementedException();
+    }
+
+}

@@ -1,0 +1,21 @@
+@page "/home"
+@inject DenheroApi denheroApi
+
+<MudText Typo="Typo.h3" Color="Color.Surface" Align="Align.Center">VAI PARAR DE GASTAR DINHEIRO ARROMBADO!!!</MudText>
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="3">
+        <CardPainel Painel="indicadores" />
+    </MudItem>
+</MudGrid>
+
+
+
+@code
+{
+    private IndicadoresPaginaInicialResponse? indicadores;
+
+    protected override async Task OnInitializedAsync()
+    {
+        indicadores = await denheroApi.GetIndicadores();
+    }
+}

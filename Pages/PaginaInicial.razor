@@ -1,21 +1,139 @@
-@page "/home"
+@page "/"
+@using PouPixFront.Components
 @inject DenheroApi denheroApi
 
-<MudText Typo="Typo.h3" Color="Color.Surface" Align="Align.Center">VAI PARAR DE GASTAR DINHEIRO ARROMBADO!!!</MudText>
-<MudGrid Justify="Justify.Center">
-    <MudItem xs="3">
+<MudText Typo="Typo.h4" Color="Color.Surface" Align="Align.Center">
+    VAI PARAR DE GASTAR DINHEIRO ARROMBADO!!!
+</MudText>
+
+
+
+@* <MudGrid Justify="Justify.Center" Class="my-2">
+    <MudItem xs="2" md="2">
         <CardPainel Painel="indicadores" />
     </MudItem>
+</MudGrid> *@
+
+<MudGrid Spacing="3">
+    <!-- coluna esquerda: titulo + calendario -->
+    <MudItem xs="12" md="8">
+
+        <MudText Typo="Typo.h4" Align="Align.Center">
+            @mesAtual.ToString("MMMM yyyy")
+        </MudText>
+
+        <MudGrid Spacing="1">
+            @foreach (List<DiaCalendario> semana in semanas)
+            {
+                <MudItem xs="12">
+                    <MudGrid Justify="Justify.Center" Spacing="1">
+                        @foreach (DiaCalendario dia in semana)
+                        {
+                            <MudItem xs="1">
+                                <MudPaper Class="@GetDayClass(dia.Data)" Style="width:70px; height:70px;"
+                                    @onclick="@(() => SelecionarDia(dia.Data))">
+                                    <MudText Typo="Typo.subtitle2" Align="Align.Center">
+                                        @dia.Data.Day
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Align="Align.Center">
+                                        R$ @dia.ValorPermitido
+                                    </MudText>
+                                </MudPaper>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudItem>
+
+    <!-- Coluna direita: Compras do dia -->
+    <MudItem xs="12" md="4">
+        <MudText Typo="Typo.h6">Compras do dia</MudText>
+        <MudPaper Class="pa-4">
+            @if (dadosDia != null && dadosDia.Any())
+            {
+                @foreach (var compra in dadosDia)
+                {
+                    <MudCard Class="mb-2 pa-2">
+                        <MudText Typo="Typo.subtitle2">@compra.Nome</MudText>
+                        <MudText Typo="Typo.body2">@compra.Categoria</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Primary">R$ @compra.Valor</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">@compra.Comentario</MudText>
+                    </MudCard>
+                }
+            }
+            else
+            {
+                <MudText>Nenhuma compra</MudText>
+            }
+        </MudPaper>
+    </MudItem>
 </MudGrid>
+</MudContainer>
 
 
 
 @code
 {
+    DateTime mesAtual = DateTime.Today;
+    DateTime diaSelecionado = DateTime.Today;
+    List<List<DiaCalendario>> semanas = new List<List<DiaCalendario>>();
+    List<HistoricoCompraResponse>? dadosDia;
+    decimal valorDiarioPermitido;
     private IndicadoresPaginaInicialResponse? indicadores;
 
     protected override async Task OnInitializedAsync()
     {
         indicadores = await denheroApi.GetIndicadores();
+        MontarCalendario(mesAtual);
     }
+
+    void MontarCalendario(DateTime dataReferencia)
+    {
+        semanas.Clear();
+
+        var primeiroDia = new DateTime(dataReferencia.Year, dataReferencia.Month, 1);
+        var ultimoDia = primeiroDia.AddMonths(1).AddDays(-1);
+
+        var inicio = primeiroDia.AddDays(-(int)primeiroDia.DayOfWeek);
+        var fim = ultimoDia.AddDays(6 - (int)ultimoDia.DayOfWeek);
+
+        var dias = new List<DiaCalendario>();
+        for (var d = inicio; d <= fim; d = d.AddDays(1))
+        {
+            dias.Add(new DiaCalendario
+            {
+                Data = d,
+                ValorPermitido = 20
+                //trazer os dados da api
+            });
+        }
+
+        for (int i = 0; i < dias.Count; i += 7)
+        {
+            semanas.Add(dias.Skip(i).Take(7).ToList());
+        }
+    }
+
+    async Task SelecionarDia(DateTime dia)
+    {
+        diaSelecionado = dia;
+        string diaString = dia.ToString(format: "yyyy-MM-dd");
+        dadosDia = await denheroApi.GetHistoricoCompras(diaString);
+        StateHasChanged();
+    }
+
+    string GetDayClass(DateTime date)
+    {
+        string classes = "pa-1 d-flex flex-column justify-center align-center calendar-day";
+        if (date.Date == DateTime.Today)
+            classes += " today"; // borda azul para hoje
+        if (date.Date == diaSelecionado.Date)
+            classes += " selected"; // destaque do clique
+        if (date.Month != mesAtual.Month)
+            classes += " other-month"; // esmaecido
+        return classes;
+    }
+
 }

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using PouPixFront.Components.Classes;
 using SiteBlazor.Response;
 
 namespace SiteBlazor.Services
@@ -20,6 +21,21 @@ namespace SiteBlazor.Services
         public async Task<List<HistoricoCompraResponse>?> GetHistoricoCompras(string date)
         {
             return await _httpClient.GetFromJsonAsync<List<HistoricoCompraResponse>>($"Compras/{date}");
+        }
+
+        public async Task<bool> AdicionarCompra(NovaCompra novaCompra)
+        {
+            try
+            {
+                HttpResponseMessage response = await _httpClient.PostAsJsonAsync("Produtos", novaCompra);
+                response.EnsureSuccessStatusCode();
+                return true;
+            }
+            catch (HttpRequestException)
+            {
+
+                throw;
+            }
         }
 
     }

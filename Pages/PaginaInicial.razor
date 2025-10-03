@@ -2,6 +2,7 @@
 @using PouPixFront.Components
 @using PouPixFront.Components.Classes
 @inject DenheroApi denheroApi
+@inject IDialogService _dialogService
 
 <MudText Typo="Typo.h4" Color="Color.Surface" Align="Align.Center">
     VAI PARAR DE GASTAR DINHEIRO ARROMBADO!!!
@@ -9,11 +10,12 @@
 
 
 
-@* <MudGrid Justify="Justify.Center" Class="my-2">
+<MudGrid Justify="Justify.Center" Class="my-2">
     <MudItem xs="2" md="2">
         <CardPainel Painel="indicadores" />
     </MudItem>
-</MudGrid> *@
+</MudGrid>
+
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-6 px-6">
     <MudGrid Spacing="2">
         <!-- coluna esquerda: titulo + calendario -->
@@ -59,7 +61,7 @@
                     <MudText Typo="Typo.h6">Compras do dia</MudText>
                 </MudItem>
                 <MudItem xs="2" Class="d-flex justify-end">
-                    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="@AbrirFormulario" />
+                    <MudIconButton OnClick="@AbrirFormulario" Icon="@Icons.Material.Filled.Add" Color="Color.Primary" />
                 </MudItem>
             </MudGrid>
 
@@ -67,7 +69,7 @@
             <MudPaper Class="pa-4">
                 @if (dadosDia != null && dadosDia.Any())
                 {
-                    @foreach (var compra in dadosDia)
+                    @foreach (HistoricoCompraResponse compra in dadosDia)
                     {
                         <MudCard Class="mb-2 pa-2">
                             <MudText Typo="Typo.subtitle2">@compra.Nome</MudText>
@@ -87,35 +89,22 @@
     </MudGrid>
 </MudContainer>
 
-<MudDialog @bind-IsOpen="_abrirDialogo">
-    <DialogContent>
-        <MudTextField @bind-Value="novaCompra.Nome" Label="Nome" Required="true" />
-        <MudTextField @bind-Value="novaCompra.IdCategoria" Label="Categoria" />
-        <MudNumericField T="decimal" @bind-Value="novaCompra.Valor" Label="Valor" Required="true" />
-        <MudTextField @bind-Value="novaCompra.Comentario" Label="Comentário" />
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="SalvarCompra" Color="Color.Primary">Salvar</MudButton>
-        <MudButton OnClick="@(() => _abrirDialogo = false)" Color="Color.Secondary">Cancelar</MudButton>
-    </DialogActions>
-</MudDialog>
-
-
 @code
 {
     DateTime mesAtual = DateTime.Today;
     DateTime diaSelecionado = DateTime.Today;
     List<List<DiaCalendario>> semanas = new List<List<DiaCalendario>>();
     List<HistoricoCompraResponse>? dadosDia;
-    decimal valorDiarioPermitido;
     private IndicadoresPaginaInicialResponse? indicadores;
-    private bool _abrirDialogo = false;
     private NovaCompra novaCompra = new NovaCompra();
 
     protected override async Task OnInitializedAsync()
     {
+        if(_dialogService == null)
+            Console.WriteLine("IDialogService nao foi injetado corretamente");
         indicadores = await denheroApi.GetIndicadores();
         MontarCalendario(mesAtual);
+        SelecionarDia(diaSelecionado);
     }
 
     void MontarCalendario(DateTime dataReferencia)
@@ -165,18 +154,30 @@
         return classes;
     }
 
-    private void AbrirFormulario()
+    private async Task AbrirFormulario()
     {
-        novaCompra.Data = DateTime.Today;
-        _abrirDialogo = true;
-        StateHasChanged();
-    }
+        var parameters = new DialogParameters();
+        parameters.Add("NovaCompra", new NovaCompra() { Data = DateTime.Today });
+        
 
-    private async Task SalvarCompra()
-    {
-        await denheroApi.AdicionarCompra(novaCompra);
-        _abrirDialogo = false;
-        await SelecionarDia(DateTime.Now);
-    }
+        DialogOptions? options = new DialogOptions
+        {
+            CloseOnEscapeKey = false,
+            CloseButton = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
 
+        var dialog = await _dialogService.ShowAsync<FormNovaCompra>(title: "Adicionar Compra", parameters,
+        options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            NovaCompra? compra = (NovaCompra)result.Data!;
+            await denheroApi.AdicionarCompra(compra);
+            await SelecionarDia(diaSelecionado);
+        }
+    }
 }

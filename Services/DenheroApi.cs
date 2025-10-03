@@ -27,7 +27,7 @@ namespace SiteBlazor.Services
         {
             try
             {
-                HttpResponseMessage response = await _httpClient.PostAsJsonAsync("Produtos", novaCompra);
+                HttpResponseMessage response = await _httpClient.PostAsJsonAsync("Compras", novaCompra);
                 response.EnsureSuccessStatusCode();
                 return true;
             }

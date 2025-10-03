@@ -7,7 +7,7 @@ namespace PouPixFront.Components.Classes
 {
     public class NovaCompra
     {
-        public int Id { get; set; }
+        public int Id { get; set; } 
         public string Nome { get; set; } = "Sem Nome";
         public int IdCategoria { get; set; }
         public decimal Valor { get; set; }
